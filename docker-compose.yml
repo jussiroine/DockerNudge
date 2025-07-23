@@ -1,0 +1,15 @@
+services:
+  wol-sender:
+    build: .
+    container_name: docker-nudge-wol
+    environment:
+      - TARGET_MAC=${TARGET_MAC}
+      - TARGET_IP=${TARGET_IP:-255.255.255.255}
+      - WOL_PORT=${WOL_PORT:-9}
+    restart: "no"  # Don't restart after container exits
+    network_mode: "host"  # Use host network to ensure broadcast packets work
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
