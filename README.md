@@ -1,6 +1,10 @@
 # DockerNudge
 
-A simple Docker container that can send a Wake-on-LAN (magic) packet to wake up a target machine on the local network.
+A simple tool that can send Wake-on-LAN (magic) packets to wake up target machines on the local network.
+
+Available in two versions:
+- **Docker version**: Python-based container for cross-platform use (Linux, macOS, Windows with Docker)
+- **PowerShell version**: Native Windows script for direct execution without Docker
 
 ## Features
 
@@ -12,7 +16,7 @@ A simple Docker container that can send a Wake-on-LAN (magic) packet to wake up 
 - ✅ Lightweight Alpine Linux based image
 - ✅ Runs as non-root user for security
 
-## Quick Start
+## Quick Start (Docker)
 
 1. **Clone the repository:**
    ```bash
@@ -53,7 +57,7 @@ The container accepts MAC addresses in multiple formats:
 - `00-11-22-33-44-55` (hyphen-separated)  
 - `001122334455` (no separators)
 
-## Usage Examples
+## Docker Usage Examples
 
 ### Basic Usage (Broadcast)
 ```bash
@@ -84,7 +88,7 @@ WOL_PORT=7
 docker-compose up --build
 ```
 
-## Alternative Usage Methods
+## Alternative Docker Usage Methods
 
 ### Direct Docker Run
 ```bash
@@ -143,15 +147,85 @@ The container provides detailed logging to stdout:
 - Try different UDP ports (7, 9, 0)
 - Ensure target machine is connected via Ethernet (WiFi WoL is unreliable)
 
+## PowerShell Version (Windows)
+
+For Windows devices, a PowerShell version is available that provides the same functionality without requiring Docker:
+
+### Quick Start (PowerShell)
+
+1. **Clone the repository:**
+   ```powershell
+   git clone https://github.com/jussiroine/DockerNudge.git
+   cd DockerNudge
+   ```
+
+2. **Run directly with parameters:**
+   ```powershell
+   .\wol_sender.ps1 -TargetMAC "00:11:22:33:44:55"
+   ```
+
+3. **Or use environment variables:**
+   ```powershell
+   $env:TARGET_MAC="00:11:22:33:44:55"
+   $env:TARGET_IP="192.168.1.100"
+   .\wol_sender.ps1
+   ```
+
+### PowerShell Usage Examples
+
+**Basic Usage (Broadcast):**
+```powershell
+.\wol_sender.ps1 -TargetMAC "00:11:22:33:44:55"
+```
+
+**Target Specific IP:**
+```powershell
+.\wol_sender.ps1 -TargetMAC "00:11:22:33:44:55" -TargetIP "192.168.1.100"
+```
+
+**Custom Port:**
+```powershell
+.\wol_sender.ps1 -TargetMAC "00:11:22:33:44:55" -WoLPort 7
+```
+
+**Using Environment Variables:**
+```powershell
+$env:TARGET_MAC="00:11:22:33:44:55"
+$env:TARGET_IP="255.255.255.255"
+$env:WOL_PORT="9"
+.\wol_sender.ps1
+```
+
+**Get Help:**
+```powershell
+Get-Help .\wol_sender.ps1 -Full
+```
+
+### PowerShell Requirements
+
+- Windows PowerShell 5.1+ or PowerShell Core 6.0+
+- Network access to target machine's subnet
+
 ## Requirements
 
+### Docker Version
 - Docker
 - Docker Compose
 - Network access to target machine's subnet
 
+### PowerShell Version
+- Windows PowerShell 5.1+ or PowerShell Core 6.0+
+- Network access to target machine's subnet
+
 ## Security
 
+### Docker Version
 - Container runs as non-root user (`wol:wol`)
 - Minimal Alpine Linux base image
 - No persistent storage or exposed ports
 - Container exits immediately after sending packet
+
+### PowerShell Version
+- Runs with current user privileges
+- No elevated permissions required
+- Script exits immediately after sending packet
