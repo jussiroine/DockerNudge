@@ -220,7 +220,12 @@ For macOS users, a native GUI application is available that provides menu bar in
    cd DockerNudge
    ```
 
-2. **Install GUI dependencies:**
+2. **Run the setup script (recommended):**
+   ```bash
+   ./setup-macos-gui.sh
+   ```
+
+   **Or install manually:**
    ```bash
    pip3 install -r requirements-gui.txt
    ```
@@ -274,6 +279,18 @@ The GUI version uses a JSON configuration file located at `~/.wol_gui_config.jso
 - Network access to target machine's subnet
 
 **Note**: If GUI dependencies are not available, the application will automatically run in CLI mode with the same functionality.
+
+### Testing and Demo
+
+To test the functionality or see a demonstration of all versions:
+
+```bash
+# Run the demo script to test all versions
+python3 demo.py
+
+# Test the setup script for macOS GUI
+./setup-macos-gui.sh
+```
 
 ## Requirements
 
