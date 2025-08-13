@@ -3,8 +3,8 @@ FROM python:3.11-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy the Wake-on-LAN sender script
-COPY wol_sender.py /app/
+# Copy the Wake-on-LAN sender scripts
+COPY wol_sender.py wol_core.py /app/
 
 # Make the script executable
 RUN chmod +x /app/wol_sender.py
