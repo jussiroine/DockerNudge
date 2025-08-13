@@ -1,0 +1,11 @@
+# macOS GUI Wake-on-LAN Application Requirements
+# Install with: pip3 install -r requirements-gui.txt
+
+# Core GUI libraries for menu bar/system tray functionality
+pystray>=0.19.0
+
+# Image processing for creating icons
+Pillow>=8.0.0
+
+# Note: These dependencies are only required for GUI mode.
+# The application will fall back to CLI mode if these are not available.

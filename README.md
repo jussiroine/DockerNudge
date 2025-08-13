@@ -2,9 +2,10 @@
 
 A simple tool that can send Wake-on-LAN (magic) packets to wake up target machines on the local network.
 
-Available in two versions:
+Available in three versions:
 - **Docker version**: Python-based container for cross-platform use (Linux, macOS, Windows with Docker)
 - **PowerShell version**: Native Windows script for direct execution without Docker
+- **macOS GUI version**: Native macOS menu bar application for easy access
 
 ## Features
 
@@ -15,6 +16,7 @@ Available in two versions:
 - ✅ Automatic container shutdown after sending packet
 - ✅ Lightweight Alpine Linux based image
 - ✅ Runs as non-root user for security
+- ✅ macOS GUI application with menu bar integration
 
 ## Quick Start (Docker)
 
@@ -206,6 +208,73 @@ Get-Help .\wol_sender.ps1 -Full
 - Windows PowerShell 5.1+ or PowerShell Core 6.0+
 - Network access to target machine's subnet
 
+## macOS GUI Version
+
+For macOS users, a native GUI application is available that provides menu bar integration for easy Wake-on-LAN access.
+
+### Quick Start (macOS GUI)
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/jussiroine/DockerNudge.git
+   cd DockerNudge
+   ```
+
+2. **Install GUI dependencies:**
+   ```bash
+   pip3 install -r requirements-gui.txt
+   ```
+
+3. **Run the GUI application:**
+   ```bash
+   python3 wol_sender_gui.py
+   ```
+
+The application will create a menu bar icon that allows you to:
+- Send Wake-on-LAN packets to configured targets
+- Manage target configurations
+- Run silently in the background
+
+### Configuration (GUI)
+
+The GUI version uses a JSON configuration file located at `~/.wol_gui_config.json`:
+
+```json
+{
+  "targets": [
+    {
+      "name": "My Desktop",
+      "mac": "00:11:22:33:44:55",
+      "ip": "192.168.1.100",
+      "port": 9
+    },
+    {
+      "name": "Media Server",
+      "mac": "AA:BB:CC:DD:EE:FF",
+      "ip": "255.255.255.255",
+      "port": 9
+    }
+  ]
+}
+```
+
+### GUI Features
+
+- **Menu Bar Integration**: Runs quietly in the macOS menu bar
+- **Multiple Targets**: Support for multiple preconfigured target machines
+- **One-Click Wake**: Send WoL packets with a single menu click
+- **CLI Fallback**: Automatically falls back to CLI mode if GUI dependencies aren't available
+- **Configuration Management**: Easy editing of target configurations
+
+### macOS GUI Requirements
+
+- macOS 10.12+ (Sierra or later)
+- Python 3.7+
+- GUI dependencies: `pystray`, `Pillow`
+- Network access to target machine's subnet
+
+**Note**: If GUI dependencies are not available, the application will automatically run in CLI mode with the same functionality.
+
 ## Requirements
 
 ### Docker Version
@@ -215,6 +284,12 @@ Get-Help .\wol_sender.ps1 -Full
 
 ### PowerShell Version
 - Windows PowerShell 5.1+ or PowerShell Core 6.0+
+- Network access to target machine's subnet
+
+### macOS GUI Version
+- macOS 10.12+ (Sierra or later)
+- Python 3.7+
+- GUI dependencies (install with: `pip3 install -r requirements-gui.txt`)
 - Network access to target machine's subnet
 
 ## Security
@@ -229,3 +304,9 @@ Get-Help .\wol_sender.ps1 -Full
 - Runs with current user privileges
 - No elevated permissions required
 - Script exits immediately after sending packet
+
+### macOS GUI Version
+- Runs with current user privileges
+- No elevated permissions required
+- Configuration stored in user's home directory
+- No network services or open ports
