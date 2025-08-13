@@ -40,9 +40,10 @@ def check_gui_availability():
 class WoLGUIApp:
     def __init__(self):
         self.config_file = Path.home() / '.wol_gui_config.json'
+        # Set up logging first so load_config can report issues
+        self.setup_logging()
         self.targets = self.load_config()
         self.icon = None
-        self.setup_logging()
         
     def setup_logging(self):
         """Configure logging"""
@@ -55,25 +56,92 @@ class WoLGUIApp:
         
     def load_config(self):
         """Load target configurations from file"""
+        def default_config():
+            return {
+                "targets": [
+                    {
+                        "name": "Example Target",
+                        "mac": "00:11:22:33:44:55",
+                        "ip": "255.255.255.255",
+                        "port": 9
+                    }
+                ]
+            }
+
         try:
-            if self.config_file.exists():
-                with open(self.config_file, 'r') as f:
-                    return json.load(f)
-            else:
-                # Default configuration
-                return {
-                    "targets": [
-                        {
-                            "name": "Example Target",
-                            "mac": "00:11:22:33:44:55",
-                            "ip": "255.255.255.255",
-                            "port": 9
-                        }
-                    ]
-                }
+            if not self.config_file.exists():
+                self.logger.info("Config file not found; creating a default one.")
+                cfg = default_config()
+                with open(self.config_file, 'w') as f:
+                    json.dump(cfg, f, indent=2)
+                return cfg
+
+            with open(self.config_file, 'r') as f:
+                raw = f.read().strip()
+                if not raw:
+                    raise ValueError("Configuration file is empty")
+                data = json.loads(raw)
+
+            validated = self.validate_config_structure(data)
+            return validated
         except Exception as e:
-            self.logger.error(f"Failed to load config: {e}")
-            return {"targets": []}
+            # Fall back to default configuration but do not overwrite user's file automatically
+            self.logger.error(f"Failed to load/validate config ({self.config_file}): {e}")
+            self.logger.error("Falling back to default in-memory configuration. Fix the file and reload.")
+            return default_config()
+
+    def validate_config_structure(self, data):
+        """Validate overall config structure and normalize it.
+
+        Expected shape:
+        {
+          "targets": [ {"name": str, "mac": str, "ip": str, "port": int }, ... ]
+        }
+        """
+        if isinstance(data, list):
+            # User maybe supplied a bare list; wrap it.
+            self.logger.warning("Config root is a list; wrapping it under 'targets'. Update the file to use an object.")
+            data = {"targets": data}
+        if not isinstance(data, dict):
+            raise ValueError("Top-level JSON must be an object (dict)")
+        targets = data.get("targets")
+        if targets is None:
+            raise ValueError("Missing 'targets' key")
+        if not isinstance(targets, list):
+            raise ValueError("'targets' must be a list")
+        normalized_targets = []
+        for idx, t in enumerate(targets, 1):
+            if not isinstance(t, dict):
+                self.logger.warning(f"Skipping target #{idx}: not an object")
+                continue
+            name = t.get("name") or f"Target {idx}"
+            mac = t.get("mac")
+            ip = t.get("ip", "255.255.255.255")
+            port = t.get("port", 9)
+            # Basic field validation
+            if not mac:
+                self.logger.warning(f"Skipping target '{name}': missing MAC")
+                continue
+            try:
+                validate_mac_address(mac)
+            except ValueError as ve:
+                self.logger.warning(f"Skipping target '{name}': {ve}")
+                continue
+            # Coerce port to int
+            try:
+                port = int(port)
+            except (TypeError, ValueError):
+                self.logger.warning(f"Target '{name}' has invalid port '{port}', defaulting to 9")
+                port = 9
+            normalized_targets.append({
+                "name": name,
+                "mac": mac,
+                "ip": ip,
+                "port": port
+            })
+        if not normalized_targets:
+            raise ValueError("No valid targets found after validation")
+        return {"targets": normalized_targets}
     
     def save_config(self):
         """Save target configurations to file"""
@@ -142,17 +210,32 @@ class WoLGUIApp:
         # Add targets
         if self.targets.get('targets'):
             for target in self.targets['targets']:
-                # Validate target before adding to menu
+                # First validate the MAC only
                 try:
-                    validate_mac_address(target['mac'])
-                    menu_items.append(
-                        pystray.MenuItem(
-                            f"Wake {target['name']} ({target['mac']})",
-                            lambda icon, item, t=target: self.send_wol_to_target(t)
-                        )
-                    )
+                    validate_mac_address(target.get('mac', ''))
                 except ValueError as e:
-                    self.logger.warning(f"Invalid target {target['name']}: {e}")
+                    self.logger.warning(
+                        f"Skipping target '{target.get('name','?')}' due to invalid MAC '{target.get('mac')}' : {e}" \
+                    )
+                    continue
+                # Now attempt to create the menu item; catch any other unexpected errors
+                try:
+                    # Create menu item text, sanitizing any problematic characters
+                    menu_text = f"Wake {target['name']} ({target['mac']})"
+                    
+                    # Create the action function with proper closure
+                    def create_action(target_data):
+                        return lambda icon, item: self.send_wol_to_target(target_data)
+                    
+                    action = create_action(target)
+                    menu_items.append(
+                        pystray.MenuItem(menu_text, action)
+                    )
+                    self.logger.debug(f"Added menu item: {menu_text}")
+                except Exception as ex:
+                    self.logger.error(
+                        f"Failed to build menu item for target '{target.get('name','?')}' - {type(ex).__name__}: {ex}"
+                    )
         
         if not menu_items:
             menu_items.append(
